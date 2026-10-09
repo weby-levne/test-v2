@@ -1,0 +1,491 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#171717">
+<title>DrawCraft</title>
+<style>
+:root{--bg:#171717;--panel:#202020;--panel2:#282828;--line:#3a3a3a;--text:#f4f4f2;--muted:#a7a7a2;--paper:#fffdf8;--accent:#fff;--danger:#d8d8d8}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text)}
+button,input{font:inherit}
+button{border:0;color:inherit;background:none}
+.app{height:100%;display:grid;grid-template-rows:56px 1fr 42px;background:#171717}
+.topbar{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line);background:#191919;z-index:5}
+.brand{font-weight:750;letter-spacing:-.02em;margin:0 8px;font-size:18px}
+.iconbtn{width:40px;height:40px;border:1px solid var(--line);border-radius:9px;display:grid;place-items:center;cursor:pointer;background:#222}
+.iconbtn:hover,.tool.active,.shapeBtn.active{background:#303030}
+.icon{width:20px;height:20px;display:block}
+.spacer{flex:1}
+.zoom{display:flex;align-items:center;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.zoom button{width:38px;height:38px;cursor:pointer}
+.zoom span{min-width:58px;text-align:center;font-size:13px;color:var(--muted)}
+.workspace{min-height:0;display:grid;grid-template-columns:64px 1fr 260px;position:relative}
+.sidebar{background:#191919;border-right:1px solid var(--line);padding:8px;display:flex;flex-direction:column;gap:7px;z-index:4}
+.tool{width:46px;height:46px;border:1px solid transparent;border-radius:9px;display:grid;place-items:center;cursor:pointer;color:#ddd}
+.tool:hover{background:#272727}.tool.active{border-color:#4a4a4a}
+.canvasArea{position:relative;min-width:0;min-height:0;overflow:hidden;background:#303030;display:grid;place-items:center}
+#canvas{background:var(--paper);touch-action:none;box-shadow:0 10px 40px #0006;display:block}
+.hint{position:absolute;left:18px;bottom:16px;background:#181818d9;border:1px solid #444;border-radius:8px;padding:8px 10px;font-size:12px;color:#bbb;pointer-events:none}
+.inspector{background:#1b1b1b;border-left:1px solid var(--line);overflow:auto;padding:14px}
+.inspector h3{margin:4px 0 12px;font-size:14px}.section{border-bottom:1px solid #303030;padding:0 0 14px;margin-bottom:14px}
+.row{display:flex;gap:8px;align-items:center;margin:8px 0}.row label{font-size:12px;color:var(--muted);flex:1}
+.field{width:90px;background:#242424;border:1px solid #3a3a3a;border-radius:7px;color:#eee;padding:7px}
+.color{width:44px;height:34px;padding:2px;background:#242424;border:1px solid #3a3a3a;border-radius:7px}
+.action{width:100%;padding:9px 10px;border:1px solid #3a3a3a;background:#242424;border-radius:8px;cursor:pointer;text-align:left}
+.action:hover{background:#2c2c2c}
+.bottom{display:flex;align-items:center;gap:14px;padding:0 12px;border-top:1px solid var(--line);background:#191919;color:#aaa;font-size:12px}.bottom .spacer{flex:1}
+.menuOverlay{position:absolute;inset:0;background:#0007;z-index:20;display:none}
+.menuOverlay.open{display:block}
+.menu{position:absolute;left:0;top:0;bottom:0;width:min(410px,92vw);background:#faf9f5;color:#171717;box-shadow:18px 0 45px #0007;padding:18px}
+.menuHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.menuHead h2{margin:0;font-size:25px}
+.menuClose{color:#111;width:40px;height:40px;border-radius:8px;font-size:28px;cursor:pointer}
+.menuItem{width:100%;display:grid;grid-template-columns:48px 1fr 22px;gap:14px;align-items:center;padding:16px;border:1px solid #d2d0ca;background:#fff;border-radius:12px;margin:10px 0;color:#111;text-align:left;cursor:pointer}
+.menuItem:hover{background:#f2f1ed}
+.menuIcon{width:48px;height:48px;border:2px solid #111;border-radius:12px;display:grid;place-items:center;background:#faf9f5}.menuIcon svg{width:31px;height:31px;fill:none;stroke:#111;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}.menuDivider{font-size:11px;letter-spacing:.12em;color:#777;margin:22px 3px 8px}.menuAction{display:block;width:100%;padding:12px 13px;margin:6px 0;text-align:left;border:1px solid #d4d1c9;background:#fff;color:#171717;border-radius:9px;font-size:13px}.menuAction:active{background:#efeee9}.importLabel{cursor:pointer}
+.accountArea{margin-top:auto;padding-top:18px;border-top:1px solid #d8d5ce}.accountStatus{font-size:12px;color:#777;margin:7px 3px 0;overflow-wrap:anywhere}.accountMenuBtn{display:flex;align-items:center;gap:12px;width:100%;padding:12px;border:1px solid #d2d0ca;background:#fff;border-radius:12px;color:#111;text-align:left;cursor:pointer}.accountAvatar{width:42px;height:42px;border:1.5px solid #111;border-radius:50%;display:grid;place-items:center;flex-shrink:0}.accountMenuBtn strong{display:block;font-size:14px}.accountMenuBtn small{display:block;color:#777;margin-top:3px;font-size:12px}.accountModal{position:absolute;inset:0;background:#000a;z-index:40;display:none;place-items:center;padding:14px}.accountModal.open{display:grid}.accountCard{width:min(480px,96vw);max-height:min(88vh,760px);overflow:auto;background:#faf9f5;color:#171717;border-radius:18px;padding:22px;box-shadow:0 20px 70px #0009}.accountCard h2{margin:0;font-size:24px}.accountTop{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.accountClose{font-size:26px;width:38px;height:38px;border-radius:8px;cursor:pointer}.accountSub{font-size:13px;color:#666;line-height:1.5}.accountField{width:100%;margin:6px 0 12px;padding:12px;border:1px solid #d2d0ca;border-radius:9px;background:#fff;color:#171717}.accountLabel{font-size:12px;color:#555}.accountPrimary,.accountSecondary{width:100%;padding:12px;border-radius:9px;cursor:pointer;margin-top:7px}.accountPrimary{background:#171717;color:#fff}.accountSecondary{border:1px solid #d2d0ca;background:#fff;color:#171717}.accountNotice{padding:10px 12px;background:#efeee9;border-radius:9px;color:#555;font-size:12px;line-height:1.5;margin:12px 0}.accountProject{display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid #e1dfd8}.accountProjectName{flex:1;min-width:0;overflow-wrap:anywhere;font-size:13px}.accountProject button{padding:7px 9px;border:1px solid #d2d0ca;border-radius:7px;background:#fff;color:#111;font-size:12px;cursor:pointer}.accountTabs{display:flex;gap:7px;margin:14px 0}.accountTabs button{flex:1;padding:9px;border:1px solid #d2d0ca;border-radius:8px;background:#fff;color:#111}.accountTabs button.active{background:#171717;color:#fff}.accountProvider{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:12px;border:1px solid #d2d0ca;border-radius:9px;background:#fff;color:#171717;cursor:pointer;margin-top:8px;font-weight:600}.accountProvider svg{width:19px;height:19px;flex-shrink:0}.accountOr{display:flex;align-items:center;gap:10px;color:#888;font-size:11px;margin:14px 0}.accountOr:before,.accountOr:after{content:"";height:1px;background:#dedbd4;flex:1}.accountMethodTabs{display:flex;gap:7px;margin:12px 0}.accountMethodTabs button{flex:1;padding:9px;border:1px solid #d2d0ca;border-radius:8px;background:#fff;color:#171717}.accountMethodTabs button.active{background:#171717;color:#fff}.accountProvider:disabled{opacity:.45;cursor:not-allowed}
+.menuIcon svg{width:31px;height:31px;fill:none;stroke:#111;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.menuIconNew{background:#111}.menuIconNew svg{stroke:#fff}
+.menuItem{transition:transform .12s ease,box-shadow .12s ease}.menuItem:active{transform:scale(.985)}
+.menuTitle{font-weight:700;font-size:17px}.ad{font-size:12px;color:#777;margin-top:3px}.arrow{font-size:23px}
+.paletteGrid{display:flex;gap:6px;flex-wrap:wrap}.swatch{width:30px;height:30px;border-radius:6px;border:1px solid #555;cursor:pointer}
+.palettePanel{display:none;position:absolute;right:18px;top:68px;background:#202020;border:1px solid #444;border-radius:12px;padding:12px;z-index:10;width:220px}.palettePanel.open{display:block}
+.palettePanel h4{margin:0 0 10px;font-size:13px}.paletteRow{display:flex;gap:7px;align-items:center;margin-bottom:10px}.paletteName{font-size:12px;color:#aaa;min-width:55px}
+.shapes{display:flex;gap:6px;flex-wrap:wrap}.shapeBtn{padding:7px 9px;border:1px solid #3b3b3b;border-radius:7px;background:#232323;cursor:pointer;font-size:12px}
+.modal{position:absolute;inset:0;background:#0009;z-index:30;display:none;place-items:center}.modal.open{display:grid}
+.modalCard{width:min(520px,92vw);background:#faf9f5;color:#111;border-radius:14px;padding:22px;box-shadow:0 20px 60px #0009}.modalCard h2{margin:0 0 8px}.modalCard p{color:#555;font-size:14px}.modalActions{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}.lightBtn{padding:10px 14px;border-radius:8px;border:1px solid #bbb;background:#fff;color:#111;cursor:pointer}.darkBtn{padding:10px 14px;border-radius:8px;background:#171717;color:#fff;cursor:pointer}
+.threeD{position:absolute;inset:0;background:#262626;display:none;overflow:hidden}.threeD.open{display:block}
+.scene{position:absolute;inset:0;perspective:900px;display:grid;place-items:center;touch-action:none}
+.cube{width:170px;height:170px;position:relative;transform-style:preserve-3d;transform:rotateX(-18deg) rotateY(28deg);cursor:grab}
+.face{position:absolute;inset:0;border:2px solid #eee;background:#f3f1e7cc}
+.front{transform:translateZ(85px)}.back{transform:rotateY(180deg) translateZ(85px)}.right{transform:rotateY(90deg) translateZ(85px)}.left{transform:rotateY(-90deg) translateZ(85px)}.top{transform:rotateX(90deg) translateZ(85px)}.bottom3{transform:rotateX(-90deg) translateZ(85px)}
+.threeToolbar{position:absolute;top:12px;left:12px;right:12px;display:flex;gap:7px;z-index:2}.threeToolbar .action3{padding:9px 12px;background:#202020;border:1px solid #444;border-radius:8px;cursor:pointer}
+@media(max-width:800px){
+ .app{grid-template-rows:52px 1fr 36px}.workspace{grid-template-columns:52px 1fr}
+ .sidebar{padding:5px}.tool{width:42px;height:42px}.inspector{display:none}
+ .brand{font-size:16px}.topbar{padding:6px}
+ .hint{bottom:10px;left:8px}
+ .menu{width:min(360px,94vw)}
+}
+@media(max-width:480px){
+ .brand{display:none}.topbar{gap:5px}.iconbtn{width:38px;height:38px}.zoom{margin-left:auto}.zoom span{min-width:48px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="topbar">
+  <button class="iconbtn" id="menuBtn" title="Menu" aria-label="Menu">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+  </button>
+  <div class="brand">DrawCraft</div>
+  <button class="iconbtn" id="undoBtn" title="Zpět">↶</button>
+  <button class="iconbtn" id="redoBtn" title="Vpřed">↷</button>
+  <div class="spacer"></div>
+  <div class="zoom"><button id="zoomOut">−</button><span id="zoomLabel">100%</span><button id="zoomIn">+</button></div>
+  <button class="iconbtn" id="paletteBtn" title="Barevná paleta">◉</button>
+  <button class="iconbtn" id="exportBtn" title="Export PNG">↓</button>
+</header>
+
+<main class="workspace">
+  <aside class="sidebar">
+    <button class="tool active" data-tool="select" title="Výběr">↖</button>
+    <button class="tool" data-tool="brush" title="Štětec">／</button>
+    <button class="tool" data-tool="eraser" title="Guma">⌫</button>
+    <button class="tool" data-tool="line" title="Čára">╱</button>
+    <button class="tool" data-tool="rect" title="Obdélník">□</button>
+    <button class="tool" data-tool="circle" title="Kruh">○</button>
+    <button class="tool" data-tool="triangle" title="Trojúhelník">△</button>
+    <button class="tool" data-tool="text" title="Text">T</button>
+    <div class="spacer"></div>
+    <button class="tool" id="clearBtn" title="Vymazat vše">⌫</button>
+  </aside>
+
+  <section class="canvasArea" id="canvasArea">
+    <canvas id="canvas" width="1200" height="800"></canvas>
+    <div class="hint">Kresli myší nebo prstem • pravým kliknutím vybereš objekt</div>
+    <div class="palettePanel" id="palettePanel">
+      <h4>Paleta</h4>
+      <div class="paletteRow"><span class="paletteName">Základ</span><div class="paletteGrid" id="paletteBasic"></div></div>
+      <div class="paletteRow"><span class="paletteName">Přírodní</span><div class="paletteGrid" id="paletteNatural"></div></div>
+      <div class="paletteRow"><span class="paletteName">Vlastní</span><input id="customColor" class="color" type="color" value="#222222"></div>
+      <div class="row"><label>Tloušťka</label><input id="size" class="field" type="number" min="1" max="80" value="6"></div>
+    </div>
+  </section>
+
+  <aside class="inspector">
+    <div class="section">
+      <h3>Vlastnosti</h3>
+      <div id="selectionText" style="font-size:12px;color:#aaa">Nic není vybráno</div>
+      <div id="props"></div>
+    </div>
+    <div class="section">
+      <h3>Geometrické tvary</h3>
+      <div class="shapes">
+        <button class="shapeBtn" data-tool="rect">Obdélník</button>
+        <button class="shapeBtn" data-tool="circle">Kruh</button>
+        <button class="shapeBtn" data-tool="triangle">Trojúhelník</button>
+        <button class="shapeBtn" data-tool="line">Čára</button>
+      </div>
+    </div>
+    <div class="section">
+      <h3>Vrstvy</h3>
+      <div id="layers"></div>
+    </div>
+  </aside>
+
+  <div class="menuOverlay" id="menuOverlay">
+    <div class="menu">
+      <div class="menuHead"><h2>Menu</h2><button class="menuClose" id="menuClose">×</button></div>
+      <button class="menuItem" id="newBtn">
+        <span class="menuIcon menuIconNew"><svg viewBox="0 0 48 48"><path d="M24 9v30M9 24h30"/></svg></span>
+        <span><div class="menuTitle">＋ Nový</div><div class="ad">Krátká reklama</div></span><span class="arrow">›</span>
+      </button>
+      <button class="menuItem" id="threeBtn">
+        <span class="menuIcon"><svg viewBox="0 0 48 48"><path d="m24 5 16 9v20l-16 9-16-9V14l16-9Z"/><path d="m8 14 16 9 16-9M24 23v20"/></svg></span>
+        <span><div class="menuTitle">3D kresba</div><div class="ad">Krátká reklama</div></span><span class="arrow">›</span>
+      </button>
+      <button class="menuItem" id="convertBtn">
+        <span class="menuIcon"><svg viewBox="0 0 48 48"><rect x="5" y="7" width="15" height="15"/><path d="M25 14h17M35 7l7 7-7 7"/><path d="m31 27 10 6-10 6-10-6 10-6Z"/></svg></span>
+        <span><div class="menuTitle">2D → 3D</div><div class="ad">Krátká reklama</div></span><span class="arrow">›</span>
+      </button>
+      <div class="menuExtras">
+        <div class="menuDivider">PROJEKTY</div>
+        <button class="menuAction" id="saveLocalBtn">Uložit do tohoto zařízení</button>
+        <button class="menuAction" id="loadLocalBtn">Obnovit poslední projekt</button>
+        <button class="menuAction" id="exportProjectBtn">Exportovat projektový soubor</button>
+        <label class="menuAction importLabel">Importovat projektový soubor<input id="importProjectInput" type="file" accept=".json,application/json" hidden></label>
+      </div>
+      <div class="accountArea">
+        <button class="accountMenuBtn" id="accountMenuBtn">
+          <span class="accountAvatar"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.5"/><path d="M4.8 20c.7-4 3.1-6 7.2-6s6.5 2 7.2 6"/></svg></span>
+          <span><strong id="accountMenuTitle">Přihlásit se / Registrovat se</strong><small id="accountMenuSub">Log in / Sign up</small></span>
+        </button>
+        <div class="accountStatus" id="accountMenuStatus">Dobrovolné · kreslit můžeš i bez účtu</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="adModal">
+    <div class="modalCard">
+      <h2>Krátká reklama</h2>
+      <p>Tady bude později připojený reklamní systém. Pro vývoj je reklama pouze simulovaná.</p>
+      <div style="height:80px;background:#eee;border-radius:8px;display:grid;place-items:center;color:#888">REKLAMA</div>
+      <div class="modalActions"><button class="darkBtn" id="adContinue">Pokračovat</button></div>
+    </div>
+  </div>
+
+  <div class="accountModal" id="accountModal" role="dialog" aria-modal="true" aria-label="Můj účet">
+    <section class="accountCard">
+      <div class="accountTop"><h2 id="accountHeading">Tvůj účet</h2><button class="accountClose" id="accountClose" aria-label="Zavřít">×</button></div>
+      <p class="accountSub" id="accountIntro">Účet je dobrovolný. Bez něj můžeš DrawCraft používat dál jako obvykle.</p>
+      <div id="accountBody"></div>
+    </section>
+  </div>
+
+  <div class="threeD" id="threeD">
+    <div class="threeToolbar">
+      <button class="action3" id="back2D">← 2D</button>
+      <button class="action3" id="addCube">Krychle</button>
+      <button class="action3" id="addCuboid">Kvádr</button>
+      <button class="action3" id="addSphere">Koule</button>
+    </div>
+    <div class="scene" id="scene"><div class="cube" id="cube">
+      <div class="face front"></div><div class="face back"></div><div class="face right"></div><div class="face left"></div><div class="face top"></div><div class="face bottom3"></div>
+    </div></div>
+  </div>
+</main>
+<footer class="bottom"><span>Plátno 1200 × 800</span><span id="status">Připraveno</span><div class="spacer"></div><span id="layerStatus">Vrstva 1</span></footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(() => {
+"use strict";
+const canvas=document.getElementById("canvas"), ctx=canvas.getContext("2d");
+const area=document.getElementById("canvasArea");
+const state={tool:"select",color:"#222222",size:6,zoom:1,objects:[],selected:null,drawing:false,start:null,temp:null,history:[],future:[],dragMode:null,handle:null,dragStart:null,original:null};
+
+function fitCanvas(){
+  const maxW=Math.max(280,area.clientWidth-28), maxH=Math.max(220,area.clientHeight-28);
+  const s=Math.min(maxW/canvas.width,maxH/canvas.height);
+  canvas.style.width=(canvas.width*s)+"px"; canvas.style.height=(canvas.height*s)+"px";
+}
+window.addEventListener("resize",fitCanvas); fitCanvas();
+
+function save(){state.history.push(JSON.stringify(state.objects));if(state.history.length>40)state.history.shift();state.future=[];}
+function restore(s){state.objects=JSON.parse(s);state.selected=null;render();updateUI();}
+function undo(){if(!state.history.length)return;state.future.push(JSON.stringify(state.objects));restore(state.history.pop());}
+function redo(){if(!state.future.length)return;state.history.push(JSON.stringify(state.objects));restore(state.future.pop());}
+document.getElementById("undoBtn").onclick=undo;document.getElementById("redoBtn").onclick=redo;
+
+function pos(e){const r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)*canvas.width/r.width,y:(e.clientY-r.top)*canvas.height/r.height}}
+function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
+function bounds(o){
+ if(o.type==="stroke"){let xs=o.points.map(p=>p.x),ys=o.points.map(p=>p.y);return{x:Math.min(...xs)-o.size/2,y:Math.min(...ys)-o.size/2,w:Math.max(1,Math.max(...xs)-Math.min(...xs)+o.size),h:Math.max(1,Math.max(...ys)-Math.min(...ys)+o.size)}}
+ return {x:o.x,y:o.y,w:o.w,h:o.h};
+}
+function hit(o,p){
+ const b=bounds(o);
+ if(o.type==="circle"){const cx=b.x+b.w/2,cy=b.y+b.h/2;return Math.hypot(p.x-cx,p.y-cy)<=Math.max(b.w,b.h)/2+8}
+ if(o.type==="line"){const A={x:o.x,y:o.y},B={x:o.x+o.w,y:o.y+o.h};const t=Math.max(0,Math.min(1,((p.x-A.x)*(B.x-A.x)+(p.y-A.y)*(B.y-A.y))/((o.w*o.w+o.h*o.h)||1)));const q={x:A.x+t*o.w,y:A.y+t*o.h};return dist(p,q)<10}
+ return p.x>=b.x-6&&p.x<=b.x+b.w+6&&p.y>=b.y-6&&p.y<=b.y+b.h+6;
+}
+function topHit(p){for(let i=state.objects.length-1;i>=0;i--)if(hit(state.objects[i],p))return i;return -1}
+function drawObj(o){
+ ctx.save();ctx.globalAlpha=o.opacity??1;ctx.strokeStyle=o.color||"#222";ctx.fillStyle=o.fill||"transparent";ctx.lineWidth=o.size||3;ctx.lineCap="round";ctx.lineJoin="round";
+ if(o.type==="stroke"){ctx.beginPath();o.points.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.stroke()}
+ else if(o.type==="rect"){ctx.strokeRect(o.x,o.y,o.w,o.h);if(o.fill&&o.fill!=="transparent")ctx.fillRect(o.x,o.y,o.w,o.h)}
+ else if(o.type==="circle"){ctx.beginPath();ctx.ellipse(o.x+o.w/2,o.y+o.h/2,Math.abs(o.w/2),Math.abs(o.h/2),0,0,Math.PI*2);if(o.fill&&o.fill!=="transparent")ctx.fill();ctx.stroke()}
+ else if(o.type==="triangle"){ctx.beginPath();ctx.moveTo(o.x+o.w/2,o.y);ctx.lineTo(o.x+o.w,o.y+o.h);ctx.lineTo(o.x,o.y+o.h);ctx.closePath();if(o.fill&&o.fill!=="transparent")ctx.fill();ctx.stroke()}
+ else if(o.type==="line"){ctx.beginPath();ctx.moveTo(o.x,o.y);ctx.lineTo(o.x+o.w,o.y+o.h);ctx.stroke()}
+ else if(o.type==="text"){ctx.font=`${o.size*5+12}px system-ui`;ctx.fillStyle=o.color;ctx.fillText(o.text,o.x,o.y)}
+ ctx.restore();
+}
+function render(){
+ ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle="#fffdf8";ctx.fillRect(0,0,canvas.width,canvas.height);
+ state.objects.forEach(drawObj);
+ if(state.temp)drawObj(state.temp);
+ if(state.selected!=null){const o=state.objects[state.selected],b=bounds(o);ctx.save();ctx.strokeStyle="#111";ctx.lineWidth=2;ctx.setLineDash([7,5]);ctx.strokeRect(b.x-5,b.y-5,b.w+10,b.h+10);ctx.setLineDash([]);const pts=[[b.x,b.y],[b.x+b.w/2,b.y],[b.x+b.w,b.y],[b.x+b.w,b.y+b.h/2],[b.x+b.w,b.y+b.h],[b.x+b.w/2,b.y+b.h],[b.x,b.y+b.h],[b.x,b.y+b.h/2]];ctx.fillStyle="#fff";ctx.strokeStyle="#111";pts.forEach(p=>{ctx.beginPath();ctx.arc(p[0],p[1],7,0,Math.PI*2);ctx.fill();ctx.stroke()});
+ ctx.font="12px system-ui";ctx.fillStyle="#111";ctx.fillText("tažením změnit velikost",b.x,b.y-14);ctx.restore()}
+}
+function setTool(t){state.tool=t;document.querySelectorAll(".tool").forEach(b=>b.classList.toggle("active",b.dataset.tool===t));document.getElementById("status").textContent=t==="select"?"Výběr objektů":t==="brush"?"Štětec":t==="eraser"?"Guma":"Nástroj: "+t}
+
+function handlePoints(b){
+ return [
+  {x:b.x,y:b.y,k:"nw"},{x:b.x+b.w/2,y:b.y,k:"n"},{x:b.x+b.w,y:b.y,k:"ne"},
+  {x:b.x+b.w,y:b.y+b.h/2,k:"e"},{x:b.x+b.w,y:b.y+b.h,k:"se"},
+  {x:b.x+b.w/2,y:b.y+b.h,k:"s"},{x:b.x,y:b.y+b.h,k:"sw"},{x:b.x,y:b.y+b.h/2,k:"w"}
+ ];
+}
+function hitHandle(p,o){
+ if(!o)return null;
+ const b=bounds(o);
+ for(const h of handlePoints(b)) if(Math.hypot(p.x-h.x,p.y-h.y)<=16) return h.k;
+ return null;
+}
+function cursorForHandle(k){
+ return ({nw:"nwse-resize",se:"nwse-resize",ne:"nesw-resize",sw:"nesw-resize",n:"ns-resize",s:"ns-resize",e:"ew-resize",w:"ew-resize"})[k]||"default";
+}
+function resizeSelected(p){
+ const o=state.objects[state.selected]; if(!o || o.type==="stroke" || o.type==="text") return;
+ const b=state.original;
+ let x=b.x,y=b.y,w=b.w,h=b.h;
+ const min=12;
+ if(state.handle.includes("w")){x=Math.min(p.x,b.x+b.w-min);w=b.x+b.w-x}
+ if(state.handle.includes("e")){w=Math.max(min,p.x-b.x)}
+ if(state.handle.includes("n")){y=Math.min(p.y,b.y+b.h-min);h=b.y+b.h-y}
+ if(state.handle.includes("s")){h=Math.max(min,p.y-b.y)}
+ o.x=x;o.y=y;o.w=w;o.h=h;
+}
+document.querySelectorAll("[data-tool]").forEach(b=>b.onclick=()=>setTool(b.dataset.tool));
+
+function startDraw(e){
+ const p=pos(e);
+ if(e.button!==undefined&&e.button===2){
+   const i=topHit(p); state.selected=i>=0?i:null; render(); updateUI(); return;
+ }
+ state.drawing=true;state.start=p;state.temp=null;
+ if(state.tool==="select"){
+   if(state.selected!=null){
+     const h=hitHandle(p,state.objects[state.selected]);
+     if(h){
+       state.dragMode="resize";state.handle=h;state.original={...bounds(state.objects[state.selected])};
+       render();updateUI();return;
+     }
+   }
+   const i=topHit(p);
+   state.selected=i>=0?i:null;
+   state.dragMode=i>=0?"move":null;
+   if(i>=0){
+     const o=state.objects[i],b=bounds(o);
+     state.dragOffset={x:p.x-b.x,y:p.y-b.y};
+   }
+   render();updateUI();return;
+ }
+ if(state.tool==="brush"||state.tool==="eraser"){
+   state.temp={type:"stroke",points:[p],color:state.tool==="eraser"?"#fffdf8":state.color,size:state.size};
+ }
+}
+function moveDraw(e){
+ if(!state.drawing)return;const p=pos(e);
+ if(state.tool==="select"&&state.selected!=null){
+   const o=state.objects[state.selected];
+   if(state.dragMode==="resize"){resizeSelected(p);render();return;}
+   if(state.dragMode==="move"){
+     if(o.type!=="stroke"){o.x=p.x-state.dragOffset.x;o.y=p.y-state.dragOffset.y}
+     else{
+       const b=bounds(o),dx=p.x-state.dragOffset.x-b.x,dy=p.y-state.dragOffset.y-b.y;
+       o.points.forEach(q=>{q.x+=dx;q.y+=dy});
+     }
+     render();return;
+   }
+ }
+ if(state.tool==="brush"||state.tool==="eraser"){state.temp.points.push(p);render();return}
+ if(["rect","circle","triangle","line"].includes(state.tool)){state.temp={type:state.tool,x:state.start.x,y:state.start.y,w:p.x-state.start.x,h:p.y-state.start.y,color:state.color,size:state.size,fill:"transparent",opacity:1};render()}
+}
+function endDraw(){
+ if(!state.drawing)return;state.drawing=false;
+ if(state.temp){save();state.objects.push(state.temp);state.selected=state.objects.length-1;state.temp=null}
+ else if(state.dragMode==="move"||state.dragMode==="resize"){state.history.push(state.dragSnapshot||JSON.stringify(state.objects));if(state.history.length>40)state.history.shift();state.future=[]}
+ state.dragMode=null;state.handle=null;state.original=null;render();updateUI();
+}
+canvas.addEventListener("pointerdown",e=>{
+ canvas.setPointerCapture?.(e.pointerId);
+ if(state.tool==="select" && e.button!==2 && state.selected!=null){
+   const p=pos(e),h=hitHandle(p,state.objects[state.selected]);
+   if(h) state.dragSnapshot=JSON.stringify(state.objects);
+   else if(topHit(p)===state.selected) state.dragSnapshot=JSON.stringify(state.objects);
+ }
+ startDraw(e);
+});
+canvas.addEventListener("pointermove",moveDraw);canvas.addEventListener("pointerup",endDraw);canvas.addEventListener("pointercancel",endDraw);
+canvas.addEventListener("pointermove",e=>{
+ if(state.tool==="select" && !state.drawing && state.selected!=null){
+   const h=hitHandle(pos(e),state.objects[state.selected]);
+   canvas.style.cursor=h?cursorForHandle(h):(topHit(pos(e))===state.selected?"move":"default");
+ }
+});
+canvas.addEventListener("contextmenu",e=>e.preventDefault());
+
+document.getElementById("clearBtn").onclick=()=>{if(!state.objects.length)return;save();state.objects=[];state.selected=null;render();updateUI()};
+document.getElementById("exportBtn").onclick=()=>{const a=document.createElement("a");a.download="drawcraft.png";a.href=canvas.toDataURL("image/png");a.click()};
+
+function updateUI(){
+ const t=document.getElementById("selectionText"),p=document.getElementById("props"),layers=document.getElementById("layers");
+ if(state.selected==null||!state.objects[state.selected]){t.textContent="Nic není vybráno";p.innerHTML="";}else{const o=state.objects[state.selected],b=bounds(o);t.textContent="Vybráno: "+o.type;p.innerHTML=`<div class="row"><label>X</label><input class="field" id="px" type="number" value="${Math.round(b.x)}"></div><div class="row"><label>Y</label><input class="field" id="py" type="number" value="${Math.round(b.y)}"></div><div class="row"><label>Šířka</label><input class="field" id="pw" type="number" value="${Math.round(b.w)}"></div><div class="row"><label>Výška</label><input class="field" id="ph" type="number" value="${Math.round(b.h)}"></div><div class="row"><label>Barva</label><input class="color" id="pc" type="color" value="${o.color||"#222222"}"></div><button class="action" id="deleteSelected">Smazat objekt</button>`;["px","py","pw","ph","pc"].forEach(id=>document.getElementById(id)?.addEventListener("change",()=>{const o=state.objects[state.selected];save();if(id==="px")o.x=+document.getElementById(id).value;if(id==="py")o.y=+document.getElementById(id).value;if(id==="pw")o.w=+document.getElementById(id).value;if(id==="ph")o.h=+document.getElementById(id).value;if(id==="pc")o.color=document.getElementById(id).value;render();updateUI()}));document.getElementById("deleteSelected").onclick=()=>{save();state.objects.splice(state.selected,1);state.selected=null;render();updateUI()}}
+ layers.innerHTML=state.objects.map((o,i)=>`<button class="action" style="margin:3px 0;${i===state.selected?"outline:1px solid #fff":""}" data-layer="${i}">${i+1}. ${o.type}</button>`).reverse().join("");
+ layers.querySelectorAll("[data-layer]").forEach(b=>b.onclick=()=>{state.selected=+b.dataset.layer;render();updateUI()});
+}
+updateUI();
+
+document.getElementById("paletteBtn").onclick=()=>document.getElementById("palettePanel").classList.toggle("open");
+function addPalette(id,colors){const el=document.getElementById(id);colors.forEach(c=>{const b=document.createElement("button");b.className="swatch";b.style.background=c;b.title=c;b.onclick=()=>{state.color=c;document.getElementById("customColor").value=c};el.appendChild(b)})}
+addPalette("paletteBasic",["#111111","#ffffff","#d94b4b","#e0a33a","#5f936c","#4e7ea8","#7d67a8"]);
+addPalette("paletteNatural",["#3a342e","#a66a4c","#d8cbb8","#65745b","#788a89","#c6b18a"]);
+document.getElementById("customColor").oninput=e=>state.color=e.target.value;
+document.getElementById("size").oninput=e=>state.size=Math.max(1,Math.min(80,+e.target.value||6));
+document.getElementById("zoomIn").onclick=()=>{state.zoom=Math.min(2,state.zoom+.1);canvas.style.transform=`scale(${state.zoom})`;document.getElementById("zoomLabel").textContent=Math.round(state.zoom*100)+"%"};
+document.getElementById("zoomOut").onclick=()=>{state.zoom=Math.max(.5,state.zoom-.1);canvas.style.transform=`scale(${state.zoom})`;document.getElementById("zoomLabel").textContent=Math.round(state.zoom*100)+"%"};
+
+const menuOverlay=document.getElementById("menuOverlay");document.getElementById("menuBtn").onclick=()=>menuOverlay.classList.add("open");document.getElementById("menuClose").onclick=()=>menuOverlay.classList.remove("open");
+const adModal=document.getElementById("adModal");let afterAd=null;
+function adThen(fn){afterAd=fn;adModal.classList.add("open")}
+document.getElementById("adContinue").onclick=()=>{adModal.classList.remove("open");if(afterAd){const f=afterAd;afterAd=null;f()}};
+document.getElementById("newBtn").onclick=()=>adThen(()=>{state.objects=[];state.selected=null;render();updateUI();menuOverlay.classList.remove("open")});
+document.getElementById("threeBtn").onclick=()=>adThen(()=>{document.getElementById("threeD").classList.add("open");menuOverlay.classList.remove("open")});
+document.getElementById("convertBtn").onclick=()=>adThen(()=>{const o=state.objects[state.selected??state.objects.length-1];if(!o){alert("Nejdřív něco nakresli.");return}document.getElementById("threeD").classList.add("open");menuOverlay.classList.remove("open")});
+
+const three=document.getElementById("threeD"),cube=document.getElementById("cube");let rx=-18,ry=28,drag=false,last=null;
+document.getElementById("back2D").onclick=()=>three.classList.remove("open");
+document.getElementById("addCube").onclick=()=>{cube.style.width="170px";cube.style.height="170px";cube.querySelectorAll(".face").forEach(f=>f.style.transform="");};
+document.getElementById("addCuboid").onclick=()=>{cube.style.width="230px";cube.style.height="150px";};
+document.getElementById("addSphere").onclick=()=>{cube.querySelectorAll(".face").forEach(f=>f.style.display="none");cube.style.width="190px";cube.style.height="190px";cube.style.borderRadius="50%";cube.style.background="#eee";cube.style.boxShadow="inset -25px -20px 45px #888, inset 18px 12px 30px #fff"};
+document.getElementById("scene").addEventListener("pointerdown",e=>{drag=true;last={x:e.clientX,y:e.clientY}});
+document.getElementById("scene").addEventListener("pointermove",e=>{if(!drag)return;rx+=(e.clientY-last.y)*.5;ry+=(e.clientX-last.x)*.5;last={x:e.clientX,y:e.clientY};cube.style.transform=`rotateX(${rx}deg) rotateY(${ry}deg)`});
+document.getElementById("scene").addEventListener("pointerup",()=>drag=false);document.getElementById("scene").addEventListener("pointercancel",()=>drag=false);
+
+
+// DrawCraft v3 enhancements: autosave, local projects, JSON backup and touch gestures.
+const DC_AUTO_KEY="drawcraft.autosave.v3";
+const DC_PROJECT_KEY="drawcraft.projects.v3";
+function dcSaveLocal(){
+  try { localStorage.setItem(DC_AUTO_KEY, JSON.stringify(state.objects)); statusText("Uloženo v zařízení"); }
+  catch(err){ statusText("Úložiště je plné — exportuj projekt"); }
+}
+function statusText(s){ const el=document.getElementById("status"); if(el)el.textContent=s; }
+function dcExportProject(){
+  const data={app:"DrawCraft",version:3,objects:state.objects};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(blob),a=document.createElement("a");
+  a.href=url;a.download="drawcraft-project.json";a.click();URL.revokeObjectURL(url);
+}
+function dcImportFile(file){
+  const reader=new FileReader();
+  reader.onload=()=>{try{
+    const parsed=JSON.parse(reader.result),objects=Array.isArray(parsed)?parsed:parsed.objects;
+    if(!Array.isArray(objects))throw new Error("invalid");
+    save();state.objects=objects;state.selected=null;render();updateUI();dcSaveLocal();statusText("Projekt importován");
+  }catch(e){alert("Tohle není platný projekt DrawCraft.");}};
+  reader.readAsText(file);
+}
+document.getElementById("saveLocalBtn")?.addEventListener("click",()=>{dcSaveLocal();document.getElementById("menuOverlay").classList.remove("open")});
+document.getElementById("loadLocalBtn")?.addEventListener("click",()=>{
+  try{const raw=localStorage.getItem(DC_AUTO_KEY);if(!raw){alert("V tomto prohlížeči zatím není uložený projekt.");return}
+  save();state.objects=JSON.parse(raw);state.selected=null;render();updateUI();statusText("Projekt obnoven");document.getElementById("menuOverlay").classList.remove("open");
+  }catch(e){alert("Projekt se nepodařilo načíst.")}
+});
+document.getElementById("exportProjectBtn")?.addEventListener("click",()=>{dcExportProject();document.getElementById("menuOverlay").classList.remove("open")});
+document.getElementById("importProjectInput")?.addEventListener("change",e=>{if(e.target.files[0])dcImportFile(e.target.files[0]);e.target.value=""});
+const dcOriginalSave=window.__drawcraftOriginalSave;
+function dcAutoAfterRender(){try{localStorage.setItem(DC_AUTO_KEY,JSON.stringify(state.objects))}catch(e){}}
+const dcRender=render;
+render=function(){dcRender();dcAutoAfterRender()};
+try{const raw=localStorage.getItem(DC_AUTO_KEY);if(raw){const parsed=JSON.parse(raw);if(Array.isArray(parsed)&&parsed.length){state.objects=parsed;state.selected=null;}}}catch(e){}
+// Add zoom by pinch and pan with two fingers without relying on any library.
+const dcPointers=new Map();let dcGesture=null;
+const dcArea=document.getElementById("canvasArea");
+dcArea.addEventListener("pointerdown",e=>{
+  dcPointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(dcPointers.size===2){const a=[...dcPointers.values()];dcGesture={d:Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y),zoom:state.zoom||1};state.drawing=false;state.temp=null;}
+},true);
+dcArea.addEventListener("pointermove",e=>{
+  if(!dcPointers.has(e.pointerId))return;dcPointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(dcPointers.size===2&&dcGesture){const a=[...dcPointers.values()],d=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);state.zoom=Math.max(.5,Math.min(2,dcGesture.zoom*d/Math.max(1,dcGesture.d)));canvas.style.transform=`scale(${state.zoom})`;const label=document.getElementById("zoomLabel");if(label)label.textContent=Math.round(state.zoom*100)+"%";}
+},true);
+function dcEnd(e){dcPointers.delete(e.pointerId);if(dcPointers.size<2)dcGesture=null}
+dcArea.addEventListener("pointerup",dcEnd,true);dcArea.addEventListener("pointercancel",dcEnd,true);
+// Keep browser reload recovery current after edits.
+const dcOldEndDraw=endDraw;
+endDraw=function(){dcOldEndDraw();dcAutoAfterRender()};
+
+// Optional accounts and cloud project library. Add the Supabase URL and anon key below
+// after creating a free Supabase project. Never put a service-role key in this file.
+const DC_SUPABASE_URL="";
+const DC_SUPABASE_ANON_KEY="";
+let dcSupabase=null,dcUser=null,dcAuthMode="login";
+const dcAccountModal=document.getElementById("accountModal"),dcAccountBody=document.getElementById("accountBody");
+const dcEsc=v=>String(v??"").replace(/[&<>\"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;", "'":"&#39;"}[c]));
+if(DC_SUPABASE_URL&&DC_SUPABASE_ANON_KEY&&window.supabase?.createClient){dcSupabase=window.supabase.createClient(DC_SUPABASE_URL,DC_SUPABASE_ANON_KEY);}
+function dcRefreshAccountMenu(){
+ const title=document.getElementById("accountMenuTitle"),sub=document.getElementById("accountMenuSub"),status=document.getElementById("accountMenuStatus");
+ if(dcUser){title.textContent="Můj účet";sub.textContent=dcUser.email||dcUser.phone||"Přihlášený uživatel";status.textContent="Moje tvorba · cloudové projekty";}
+ else{title.textContent="Přihlásit se / Registrovat se";sub.textContent="Log in / Sign up";status.textContent="Dobrovolné · kreslit můžeš i bez účtu";}
+}
+function dcShowAccount(){dcAccountModal.classList.add("open");dcRenderAccount();}
+function dcHideAccount(){dcAccountModal.classList.remove("open");}
+function dcAccountNotice(msg){const n=document.getElementById("accountNotice");if(n)n.textContent=msg;else alert(msg);}
+function dcRenderAccount(){
+ document.getElementById("accountHeading").textContent=dcUser?"Můj účet":"Tvůj účet";
+ document.getElementById("accountIntro").textContent=dcUser?"Tvoje projekty se ukládají do účtu a můžeš je otevřít i na jiném zařízení.":"Účet je dobrovolný. Bez něj můžeš kreslit a ukládat do zařízení jako dosud.";
+ if(!dcUser){
+   const configured=!!dcSupabase;
+   dcAccountBody.innerHTML=`${!configured?'<div class="accountNotice" id="accountNotice">Přihlášení aktivuješ po propojení Supabase. Návod je v README.md. Bez účtu můžeš dál kreslit a ukládat lokálně.</div>':'<div class="accountNotice" id="accountNotice">Přihlas se nebo si vytvoř účet pomocí e-mailu a hesla. Účet je dobrovolný a DrawCraft zůstává zdarma.</div>'}
+   <div class="accountTabs"><button id="accountLoginTab" class="${dcAuthMode==='login'?'active':''}">Přihlásit se</button><button id="accountSignupTab" class="${dcAuthMode==='signup'?'active':''}">Registrovat se</button></div>
+   <form id="accountForm"><label class="accountLabel" for="accountEmail">E-mail</label><input class="accountField" id="accountEmail" type="email" autocomplete="email" required placeholder="tvuj@email.cz"><label class="accountLabel" for="accountPassword">Heslo</label><input class="accountField" id="accountPassword" type="password" minlength="6" autocomplete="${dcAuthMode==='login'?'current-password':'new-password'}" required placeholder="Alespoň 6 znaků"><button class="accountPrimary" type="submit" ${!configured?'disabled':''}>${dcAuthMode==='login'?'Přihlásit se':'Vytvořit účet'}</button></form>
+   <button class="accountSecondary" id="accountContinueLocal">Pokračovat bez účtu</button>`;
+   document.getElementById("accountLoginTab").onclick=()=>{dcAuthMode="login";dcRenderAccount()};
+   document.getElementById("accountSignupTab").onclick=()=>{dcAuthMode="signup";dcRenderAccount()};
+   document.getElementById("accountContinueLocal").onclick=dcHideAccount;
+   const emailForm=document.getElementById("accountForm");
+   emailForm.onsubmit=async e=>{e.preventDefault();if(!dcSupabase)return;const email=document.getElementById("accountEmail").value.trim(),password=document.getElementById("accountPassword").value;const btn=e.target.querySelector('button[type="submit"]');btn.disabled=true;btn.textContent="Pracuji…";
+     try{let result;if(dcAuthMode==="signup")result=await dcSupabase.auth.signUp({email,password});else result=await dcSupabase.auth.signInWithPassword({email,password});if(result.error)throw result.error;if(dcAuthMode==="signup"&&!result.data.session){dcAccountBody.innerHTML='<div class="accountNotice">Účet byl vytvořen. Zkontroluj e-mail a potvrď registraci, potom se přihlas.</div><button class="accountPrimary" id="accountBackLogin">Zpět na přihlášení</button>';document.getElementById("accountBackLogin").onclick=()=>{dcAuthMode="login";dcRenderAccount()};return;}dcUser=result.data.user;dcRefreshAccountMenu();dcRenderAccount();}catch(err){dcAccountNotice(err.message||"Přihlášení se nepodařilo.");}finally{if(btn.isConnected){btn.disabled=false;btn.textContent=dcAuthMode==="login"?"Přihlásit se":"Vytvořit účet"}}
+   };
+ }else{
+   dcAccountBody.innerHTML=`<div class="accountNotice">Přihlášeno jako <strong>${dcEsc(dcUser.email||"Uživatel")}</strong></div><button class="accountPrimary" id="cloudSaveBtn">Uložit aktuální projekt do cloudu</button><button class="accountSecondary" id="cloudRefreshBtn">Obnovit seznam projektů</button><div style="margin-top:18px;font-weight:700">Moje tvorba</div><div id="cloudProjects" class="accountSub" style="margin-top:8px">Načítám projekty…</div><button class="accountSecondary" id="accountSignOut">Odhlásit se</button>`;
+   document.getElementById("cloudSaveBtn").onclick=dcCloudSave;document.getElementById("cloudRefreshBtn").onclick=dcLoadCloudProjects;document.getElementById("accountSignOut").onclick=async()=>{await dcSupabase.auth.signOut();dcUser=null;dcRefreshAccountMenu();dcRenderAccount()};dcLoadCloudProjects();
+ }
+}
+async function dcCloudSave(){if(!dcSupabase||!dcUser)return;const name=prompt("Jak se má projekt jmenovat?","Moje kresba");if(name===null)return;const btn=document.getElementById("cloudSaveBtn");if(btn){btn.disabled=true;btn.textContent="Ukládám…"}try{const payload={user_id:dcUser.id,name:name.trim()||"Moje kresba",objects:state.objects,updated_at:new Date().toISOString()};const {error}=await dcSupabase.from("drawcraft_projects").insert(payload);if(error)throw error;statusText("Projekt uložen do cloudu");await dcLoadCloudProjects()}catch(err){dcAccountNotice("Cloudové uložení selhalo: "+(err.message||"zkontroluj nastavení databáze"))}finally{if(btn){btn.disabled=false;btn.textContent="Uložit aktuální projekt do cloudu"}}}
+async function dcLoadCloudProjects(){const el=document.getElementById("cloudProjects");if(!el||!dcSupabase||!dcUser)return;el.textContent="Načítám…";try{const {data,error}=await dcSupabase.from("drawcraft_projects").select("id,name,updated_at,objects").order("updated_at",{ascending:false}).limit(100);if(error)throw error;if(!data?.length){el.textContent="Zatím tu nemáš uložené žádné projekty.";return;}el.innerHTML="";data.forEach(project=>{const row=document.createElement("div");row.className="accountProject";const name=document.createElement("div");name.className="accountProjectName";name.textContent=project.name;const open=document.createElement("button");open.textContent="Otevřít";open.onclick=()=>{if(!confirm("Otevřít tento projekt? Neuložené změny na plátně budou nahrazeny."))return;save();state.objects=Array.isArray(project.objects)?project.objects:[];state.selected=null;render();updateUI();dcSaveLocal();dcHideAccount();document.getElementById("menuOverlay").classList.remove("open");statusText("Otevřeno z cloudu")};const del=document.createElement("button");del.textContent="Smazat";del.onclick=async()=>{if(!confirm("Opravdu smazat projekt „"+project.name+"“?"))return;const {error}=await dcSupabase.from("drawcraft_projects").delete().eq("id",project.id);if(error){dcAccountNotice(error.message);return}dcLoadCloudProjects()};row.append(name,open,del);el.appendChild(row)});}catch(err){el.textContent="Nepodařilo se načíst projekty. Zkontroluj SQL tabulku a přístupová pravidla Supabase."}}
+document.getElementById("accountMenuBtn").onclick=dcShowAccount;document.getElementById("accountClose").onclick=dcHideAccount;dcAccountModal.addEventListener("click",e=>{if(e.target===dcAccountModal)dcHideAccount()});
+if(dcSupabase){dcSupabase.auth.getSession().then(({data})=>{dcUser=data.session?.user||null;dcRefreshAccountMenu()});dcSupabase.auth.onAuthStateChange((_event,session)=>{dcUser=session?.user||null;dcRefreshAccountMenu()});}
+dcRefreshAccountMenu();
+
+render();
+})();
+</script>
+</body>
+</html>
