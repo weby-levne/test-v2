@@ -455,8 +455,8 @@ endDraw=function(){dcOldEndDraw();dcAutoAfterRender()};
 
 // Optional accounts and cloud project library. Add the Supabase URL and anon key below
 // after creating a free Supabase project. Never put a service-role key in this file.
-const DC_SUPABASE_URL="";
-const DC_SUPABASE_ANON_KEY="";
+const DC_SUPABASE_URL="https://jixigcixaddvejktkvgc.supabase.co";
+const DC_SUPABASE_ANON_KEY="sb_publishable_hhmHPPOkUbvgr3-QaqB5BA__-LHq-VI";
 let dcSupabase=null,dcUser=null,dcAuthMode="login";
 const dcAccountModal=document.getElementById("accountModal"),dcAccountBody=document.getElementById("accountBody");
 const dcEsc=v=>String(v??"").replace(/[&<>\"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;", "'":"&#39;"}[c]));
